@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { VEHICLE_CATEGORIES } from "@/lib/data";
-import VehicleIllustration from "@/components/icons/VehicleIllustration";
+import VehicleImage from "@/components/vehicle/VehicleImage";
 
 export default function Categories() {
   return (
@@ -12,9 +12,7 @@ export default function Categories() {
             href={`/vehicles?type=${c.type}`}
             className="group border border-ink/10 rounded-sm p-3 sm:p-4 hover:border-signal transition-colors"
           >
-            <div className="h-14 sm:h-16">
-              <VehicleIllustration imageKey={c.imageKey} />
-            </div>
+            <VehicleImage imageKey={c.imageKey} alt={c.type} className="h-24 sm:h-28 rounded-sm bg-steel/10" />
             <p className="mt-2 font-display text-sm sm:text-base text-ink">{c.type}</p>
             <p className="text-xs text-ink/50 hidden sm:block">{c.blurb}</p>
           </Link>

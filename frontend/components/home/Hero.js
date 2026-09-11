@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Button from "@/components/ui/Button";
-import VehicleIllustration from "@/components/icons/VehicleIllustration";
+import VehicleImage from "@/components/vehicle/VehicleImage";
 
 export default function Hero() {
   return (
@@ -51,15 +51,9 @@ export default function Hero() {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.15 }}
-          className="relative h-64 sm:h-80 lg:h-96"
+          className="relative h-64 sm:h-80 lg:h-96 group"
         >
-          <div className="absolute inset-0 bg-steel/40 rounded-sm" />
-          <div className="absolute bottom-6 left-6 w-32 sm:w-40">
-            <VehicleIllustration imageKey="crane" />
-          </div>
-          <div className="absolute bottom-4 right-8 w-28 sm:w-36">
-            <VehicleIllustration imageKey="jcb" />
-          </div>
+          <VehicleImage imageKey="crane" alt="Crane" className="absolute inset-0 rounded-sm" />
         </motion.div>
       </div>
     </section>

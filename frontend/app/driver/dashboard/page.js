@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import VehicleIllustration from "@/components/icons/VehicleIllustration";
+import VehicleImage from "@/components/vehicle/VehicleImage";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 
@@ -102,10 +102,8 @@ export default function DriverDashboard() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {vehicles.map((v) => (
-                    <div key={v._id} className="border border-ink/10 rounded-sm p-4 flex gap-3 bg-concrete">
-                      <div className="w-16 h-16 shrink-0">
-                        <VehicleIllustration imageKey={v.imageKey} />
-                      </div>
+                    <div key={v._id} className="border border-ink/10 rounded-sm p-4 flex gap-3 bg-concrete group">
+                      <VehicleImage imageKey={v.imageKey} alt={v.name} className="w-16 h-16 shrink-0 rounded-sm bg-steel/10" />
                       <div>
                         <p className="font-medium text-ink text-sm">{v.name}</p>
                         <p className="text-xs text-ink/50 mb-1.5">₹{v.pricePerHour}/hour</p>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import VehicleIllustration from "@/components/icons/VehicleIllustration";
+import VehicleImage from "@/components/vehicle/VehicleImage";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 
@@ -7,10 +7,8 @@ export default function VehicleCard({ vehicle }) {
   const isAvailable = vehicle.availabilityStatus === "available";
 
   return (
-    <div className="border border-ink/10 rounded-sm bg-concrete overflow-hidden flex flex-col hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] transition-shadow">
-      <div className="h-36 sm:h-40 bg-steel/10 p-4">
-        <VehicleIllustration imageKey={vehicle.imageKey} />
-      </div>
+    <div className="group border border-ink/10 rounded-sm bg-concrete overflow-hidden flex flex-col hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] transition-shadow">
+      <VehicleImage imageKey={vehicle.imageKey} alt={vehicle.name} className="h-36 sm:h-40 bg-steel/10" />
 
       <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
         <div className="flex items-start justify-between gap-2">

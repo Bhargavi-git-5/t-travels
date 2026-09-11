@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
 import { FALLBACK_VEHICLES } from "@/lib/data";
-import VehicleIllustration from "@/components/icons/VehicleIllustration";
+import VehicleImage from "@/components/vehicle/VehicleImage";
 import Badge from "@/components/ui/Badge";
 import BookingWidget from "@/components/vehicle/BookingWidget";
 
@@ -21,9 +21,11 @@ export default async function VehicleDetailPage({ params }) {
     <div className="max-w-6xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
       <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-10">
         <div>
-          <div className="h-56 sm:h-72 bg-steel/10 rounded-sm p-8 mb-6">
-            <VehicleIllustration imageKey={vehicle.imageKey} />
-          </div>
+          <VehicleImage
+            imageKey={vehicle.imageKey}
+            alt={vehicle.name}
+            className="h-56 sm:h-72 rounded-sm bg-steel/10 mb-6"
+          />
 
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
