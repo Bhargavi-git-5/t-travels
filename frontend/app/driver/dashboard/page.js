@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { playChime } from "@/lib/playChime";
 import VehicleImage from "@/components/vehicle/VehicleImage";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
@@ -14,8 +15,23 @@ export default function DriverDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState("");
+  const [soundOn, setSoundOn] = useState(true);
 
-  async function refresh() {
+  // Tracks notification IDs we've already seen/played a sound for, so we
+  // only chime on genuinely NEW notifications - not on first load, and not
+  // repeatedly for the same one every time the 15s poll re-fetches it.
+  const seenIds = useRef(new Set());
+
+  function applyNotifications(list, { isFirstLoad = false } = {}) {
+    const newOnes = list.filter((n) => !seenIds.current.has(n._id));
+    list.forEach((n) => seenIds.current.add(n._id));
+    setNotifications(list);
+    if (!isFirstLoad && newOnes.length > 0 && soundOn) {
+      playChime();
+    }
+  }
+
+  async function refresh({ isFirstLoad = false } = {}) {
     const [v, b, n] = await Promise.all([
       api.getMyVehicles(token),
       api.getDriverBookings(token),
@@ -23,19 +39,20 @@ export default function DriverDashboard() {
     ]);
     setVehicles(v);
     setBookings(b);
-    setNotifications(n);
+    applyNotifications(n, { isFirstLoad });
   }
 
   useEffect(() => {
     if (authLoading || !token) return;
-    refresh().finally(() => setLoading(false));
+    refresh({ isFirstLoad: true }).finally(() => setLoading(false));
     // Simple polling for the MVP notification system - see the README
     // for how this gets swapped for Socket.IO push later without
     // changing the data shape.
     const interval = setInterval(() => {
-      api.getNotifications(token).then(setNotifications);
+      api.getNotifications(token).then((n) => applyNotifications(n));
     }, 15000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, authLoading]);
 
   async function respond(bookingId, status) {
@@ -96,7 +113,10 @@ export default function DriverDashboard() {
             </section>
 
             <section className="mb-10">
-              <h2 className="font-display text-xl text-ink mb-4">My vehicles</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-xl text-ink">My vehicles</h2>
+                <Button variant="outline" href="/driver/vehicles/new">+ List a vehicle</Button>
+              </div>
               {vehicles.length === 0 ? (
                 <p className="text-sm text-ink/50">No vehicles listed yet.</p>
               ) : (
@@ -133,7 +153,16 @@ export default function DriverDashboard() {
           </div>
 
           <aside>
-            <h2 className="font-display text-xl text-ink mb-4">Notifications</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-xl text-ink">Notifications</h2>
+              <button
+                onClick={() => setSoundOn((s) => !s)}
+                className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
+                title={soundOn ? "Sound on - click to mute" : "Sound off - click to unmute"}
+              >
+                {soundOn ? "🔔 Sound on" : "🔕 Muted"}
+              </button>
+            </div>
             <div className="space-y-2">
               {notifications.length === 0 ? (
                 <p className="text-sm text-ink/50">Nothing yet.</p>
