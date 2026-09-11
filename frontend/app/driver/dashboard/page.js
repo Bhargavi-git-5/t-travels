@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { playChime } from "@/lib/playChime";
+import {
+  notificationsSupported,
+  getPermission,
+  requestPermission,
+  showBackgroundNotification,
+} from "@/lib/browserNotify";
 import VehicleImage from "@/components/vehicle/VehicleImage";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
@@ -16,6 +22,11 @@ export default function DriverDashboard() {
   const [loading, setLoading] = useState(true);
   const [actionError, setActionError] = useState("");
   const [soundOn, setSoundOn] = useState(true);
+  const [popupPermission, setPopupPermission] = useState("default");
+
+  useEffect(() => {
+    setPopupPermission(getPermission());
+  }, []);
 
   // Tracks notification IDs we've already seen/played a sound for, so we
   // only chime on genuinely NEW notifications - not on first load, and not
@@ -26,8 +37,12 @@ export default function DriverDashboard() {
     const newOnes = list.filter((n) => !seenIds.current.has(n._id));
     list.forEach((n) => seenIds.current.add(n._id));
     setNotifications(list);
-    if (!isFirstLoad && newOnes.length > 0 && soundOn) {
-      playChime();
+    if (!isFirstLoad && newOnes.length > 0) {
+      if (soundOn) playChime();
+      // Only the most recent new one, to avoid a stack of popups if
+      // several bookings arrived while the tab was in the background.
+      const latest = newOnes[0];
+      showBackgroundNotification("T-Travels", latest.message);
     }
   }
 
@@ -65,6 +80,18 @@ export default function DriverDashboard() {
     }
   }
 
+  const pendingBookings = bookings.filter((b) => b.status === "pending");
+
+  // Keeps chiming every few seconds for as long as there's at least one
+  // unanswered booking request - not just once when it first arrives.
+  // Stops the moment the count drops to 0 (accepted/declined) or the
+  // person mutes it.
+  useEffect(() => {
+    if (!soundOn || pendingBookings.length === 0) return;
+    const repeat = setInterval(() => playChime(), 8000);
+    return () => clearInterval(repeat);
+  }, [soundOn, pendingBookings.length]);
+
   if (!authLoading && !user) {
     return (
       <div className="max-w-lg mx-auto px-5 py-16 text-center">
@@ -74,7 +101,6 @@ export default function DriverDashboard() {
     );
   }
 
-  const pendingBookings = bookings.filter((b) => b.status === "pending");
   const otherBookings = bookings.filter((b) => b.status !== "pending");
 
   return (
@@ -153,15 +179,25 @@ export default function DriverDashboard() {
           </div>
 
           <aside>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 gap-2">
               <h2 className="font-display text-xl text-ink">Notifications</h2>
-              <button
-                onClick={() => setSoundOn((s) => !s)}
-                className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
-                title={soundOn ? "Sound on - click to mute" : "Sound off - click to unmute"}
-              >
-                {soundOn ? "🔔 Sound on" : "🔕 Muted"}
-              </button>
+              <div className="flex gap-2">
+                {notificationsSupported() && popupPermission !== "granted" && (
+                  <button
+                    onClick={async () => setPopupPermission(await requestPermission())}
+                    className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
+                  >
+                    Enable popups
+                  </button>
+                )}
+                <button
+                  onClick={() => setSoundOn((s) => !s)}
+                  className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
+                  title={soundOn ? "Sound on - click to mute" : "Sound off - click to unmute"}
+                >
+                  {soundOn ? "🔔 Sound on" : "🔕 Muted"}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               {notifications.length === 0 ? (

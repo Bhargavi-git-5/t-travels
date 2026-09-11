@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { playChime } from "@/lib/playChime";
+import {
+  notificationsSupported,
+  getPermission,
+  requestPermission,
+  showBackgroundNotification,
+} from "@/lib/browserNotify";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 
@@ -20,6 +26,11 @@ export default function CustomerDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [soundOn, setSoundOn] = useState(true);
+  const [popupPermission, setPopupPermission] = useState("default");
+
+  useEffect(() => {
+    setPopupPermission(getPermission());
+  }, []);
 
   const seenIds = useRef(new Set());
 
@@ -27,8 +38,9 @@ export default function CustomerDashboard() {
     const newOnes = list.filter((n) => !seenIds.current.has(n._id));
     list.forEach((n) => seenIds.current.add(n._id));
     setNotifications(list);
-    if (!isFirstLoad && newOnes.length > 0 && soundOn) {
-      playChime();
+    if (!isFirstLoad && newOnes.length > 0) {
+      if (soundOn) playChime();
+      showBackgroundNotification("T-Travels", newOnes[0].message);
     }
   }
 
@@ -65,16 +77,7 @@ export default function CustomerDashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
-      <div className="flex items-center justify-between mb-1">
-        <h1 className="font-display text-3xl text-ink">My bookings</h1>
-        <button
-          onClick={() => setSoundOn((s) => !s)}
-          className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
-          title={soundOn ? "Sound on - click to mute" : "Sound off - click to unmute"}
-        >
-          {soundOn ? "🔔 Sound on" : "🔕 Muted"}
-        </button>
-      </div>
+      <h1 className="font-display text-3xl text-ink mb-1">My bookings</h1>
       <p className="text-ink/60 text-sm mb-8">{user ? `Welcome back, ${user.name.split(" ")[0]}.` : ""}</p>
 
       {loading ? (
@@ -110,7 +113,26 @@ export default function CustomerDashboard() {
           </div>
 
           <aside>
-            <h2 className="font-display text-lg text-ink mb-4">Notifications</h2>
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h2 className="font-display text-lg text-ink">Notifications</h2>
+              <div className="flex gap-2">
+                {notificationsSupported() && popupPermission !== "granted" && (
+                  <button
+                    onClick={async () => setPopupPermission(await requestPermission())}
+                    className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
+                  >
+                    Enable popups
+                  </button>
+                )}
+                <button
+                  onClick={() => setSoundOn((s) => !s)}
+                  className="text-xs text-ink/60 border border-ink/15 rounded-sm px-2.5 py-1 hover:bg-concretedark"
+                  title={soundOn ? "Sound on - click to mute" : "Sound off - click to unmute"}
+                >
+                  {soundOn ? "🔔" : "🔕"}
+                </button>
+              </div>
+            </div>
             <div className="space-y-2">
               {notifications.length === 0 ? (
                 <p className="text-sm text-ink/50">Nothing yet.</p>
